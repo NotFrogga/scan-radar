@@ -20,7 +20,7 @@
     function selectMangas()
     {
         $link = databaseConnexion();
-        $sQuery = "SELECT `MAN_NAME`, `MAN_LAST_SCAN`, `MAN_DATE`, `MAN_ID` FROM mangas";
+        $sQuery = "SELECT `SCA_NAME`, `SCA_LAST_SCAN`, `SCA_RELEASE_DATE`, `SCA_ID` FROM `sr_scans`";
         $result = mysqli_query($link, $sQuery);
         if ($result) {
             return mysqli_fetch_all($result);
@@ -28,7 +28,7 @@
         return null;
     }
 
-        /**
+    /**
      * Updates database manga table and flux_rss table.
      * Receives an xml item in entry.
      */
@@ -36,12 +36,11 @@
     {
         $link = databaseConnexion();
         $iNewItem =
-            "UPDATE `scans`
+            "UPDATE `sr_scans`
             SET
-            `MAN_LAST_SCAN` = {$_scan_number},
-            `MAN_DATE` = {$_scan_date}
-            WHERE `MAN_ID` = {$manga_id}";
-
+            `SCA_LAST_SCAN` = '{$_scan_number}',
+            `SCA_RELEASE_DATE` = '{$_scan_date}'
+            WHERE `SCA_ID` = '{$manga_id}'";
         $result = mysqli_query($link, $iNewItem);
         if ($result) {
             return true;
