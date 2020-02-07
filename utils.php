@@ -61,4 +61,30 @@
             "date" => $_item_date
         );
     }
+    
+    include 'simple_html_dom/simple_html_dom.php';
+    $url_mangas = "https://scantrad.net/mangas";
+
+    /**
+     *  Gets mangas from a specific URL
+     *  returns an array with manga name and manga href string which is used to store the scans
+     *  returns null if no mangas were filled.
+     */
+    function getMangasFromHTML($_url) 
+    {
+        $html = file_get_html($_url);
+        $a = $html->find('a[class=home-manga]');
+        $ret = $html->find('a[class=home-manga] div[class=hm-left] div[class=hm-info] div[class=hmi-titre]');
+        $array_mangas = array();
+        for ($i = 0; $i < max(sizeof($a), sizeof($ret)); $i++) {
+            $sub_array = ['name' => $ret[$i]->innertext, 'href' => $a[$i]->href];
+            array_push($array_mangas, $sub_array);
+        }
+        if (sizeof($array_mangas) > 0) {
+            return $array_mangas;
+        }
+        else {
+            return null;
+        }   
+    }
 ?>
