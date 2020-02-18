@@ -64,4 +64,8 @@
 */
 $mangas = selectMangas();
 searchNewScans($xml, $mangas);
+$mangasToAdd = getMangasFromHTML("https://scantrad.net/mangas");
+foreach ($mangasToAdd as $manga) {
+    $result = addMangatoDB($manga);
+}
 ?>

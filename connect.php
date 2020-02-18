@@ -64,4 +64,22 @@
         }
         return false;
     }
+
+    /**
+     * Inserts manga in manga table
+     * $_array contains 'name' and 'href'
+     * returns true if insert is successful
+     * returns false if insert failed
+     */
+    function addMangatoDB($_array) {
+        $link = databaseConnexion();
+        $_manga_name = $_array["name"];
+        $iNewItem = "INSERT INTO `sr_mangas` (`MAN_NAME`) VALUES ('{$_manga_name}')
+                     ON DUPLICATE KEY UPDATE `MAN_ID` = `MAN_ID`";
+        $result = mysqli_query($link, $iNewItem);
+        if ($result) {
+            return true;            
+        }
+        return false;
+    }
 ?>
