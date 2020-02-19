@@ -62,8 +62,12 @@
 * PHP Executions methods
 * 
 */
-$mangas = selectMangas();
-searchNewScans($xml, $mangas);
+$users = selectAllUsers();
+foreach ($users as $user) {
+    $user_id = $user[0];
+    $mangas = selectScansByUserID($user_id);
+    searchNewScans($xml, $mangas);
+}
 $mangasToAdd = getMangasFromHTML("https://scantrad.net/mangas");
 foreach ($mangasToAdd as $manga) {
     $result = addMangatoDB($manga);

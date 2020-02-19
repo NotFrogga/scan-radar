@@ -14,16 +14,31 @@
     }
 
     /**
-     * Selects from database mangas
+     * Selects users from users table
+     * Returns an array of users or null if empty
+     */
+    function selectAllUsers(){
+        $link = databaseConnexion();
+        $sQuery = "SELECT `USR_ID`, `USR_MSG_ID` FROM sr_users";
+        $query = mysqli_query($link, $sQuery);
+        if ($query) {
+            return mysqli_fetch_all($query);
+        }
+        return null;
+    }
+
+    /**
+     * Selects scans from scan table that are linked to user by Lien_User_Scan
      * Returns an array with data from manga or null if empty
      */
-    function selectMangas()
+    function selectScansByUserID($_user_id)
     {
         $link = databaseConnexion();
-        $sQuery = "SELECT `SCA_NAME`, `SCA_LAST_SCAN`, `SCA_RELEASE_DATE`, `SCA_ID` FROM `sr_scans`";
-        $result = mysqli_query($link, $sQuery);
-        if ($result) {
-            return mysqli_fetch_all($result);
+        $sQuery = "SELECT `SCA_NAME`, `SCA_LAST_SCAN`, `SCA_RELEASE_DATE`, `SCA_ID` FROM `sr_scans` s 
+                   INNER JOIN `sr_lien_scan_user` lsu ON lsu.LSU_USER_ID = {$_user_id} AND lsu.LSU_SCAN_ID = s.SCA_ID";
+        $query = mysqli_query($link, $sQuery);
+        if ($query) {
+            return mysqli_fetch_all($query);
         }
         return null;
     }
@@ -41,8 +56,8 @@
             `SCA_LAST_SCAN` = '{$_scan_number}',
             `SCA_RELEASE_DATE` = '{$_scan_date}'
             WHERE `SCA_ID` = '{$manga_id}'";
-        $result = mysqli_query($link, $iNewItem);
-        if ($result) {
+        $query = mysqli_query($link, $iNewItem);
+        if ($query) {
             return true;
         }
         return false;
@@ -58,8 +73,8 @@
         ({$_user_msg_ID})
         ";
 
-        $result = mysqli_query($link, $uUserID);
-        if ($result) {
+        $query = mysqli_query($link, $uUserID);
+        if ($query) {
             return true;
         }
         return false;
@@ -76,9 +91,27 @@
         $_manga_name = $_array["name"];
         $iNewItem = "INSERT INTO `sr_mangas` (`MAN_NAME`) VALUES ('{$_manga_name}')
                      ON DUPLICATE KEY UPDATE `MAN_ID` = `MAN_ID`";
-        $result = mysqli_query($link, $iNewItem);
-        if ($result) {
+        $query = mysqli_query($link, $iNewItem);
+        if ($query) {
             return true;            
+        }
+        return false;
+    }
+
+    /**
+     * Inserts link between user and scan in Lien_Scan_User table
+     * $_scan_id is the scan id
+     * $_user_id is the user id
+     * returns true if insert is successful
+     * returns false if insert failed
+     */
+    function insertLinkUserScan($_scan_id, $_user_id) {
+        $link = databaseConnexion();
+        $iNewItem = "INSERT INTO `sr_lien_scan_user` (`LSU_SCAN_ID`, `LSU_USER_ID`) VALUES ({$_scan_id}, {$_user_id})
+                     ON DUPLICATE KEY UPDATE `LSU_ID` = `LSU_ID`";
+        $query = mysqli_query($link, $iNewItem);
+        if ($query) {
+            return true;
         }
         return false;
     }
