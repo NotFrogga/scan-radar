@@ -125,7 +125,6 @@ ALTER TABLE `sr_lien_scan_user`
 --
 ALTER TABLE `sr_mangas`
   MODIFY `MAN_ID` int(11) NOT NULL AUTO_INCREMENT;
-COMMIT;
 
 --
 -- Structure de la table `sr_users`
