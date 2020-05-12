@@ -127,6 +127,36 @@ ALTER TABLE `sr_mangas`
   MODIFY `MAN_ID` int(11) NOT NULL AUTO_INCREMENT;
 COMMIT;
 
+--
+-- Structure de la table `sr_users`
+--
+
+CREATE TABLE `sr_users` (
+  `USR_ID` int(11) NOT NULL,
+  `USR_MSG_ID` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Index pour les tables déchargées
+--
+
+--
+-- Index pour la table `sr_users`
+--
+ALTER TABLE `sr_users`
+  ADD PRIMARY KEY (`USR_ID`);
+
+--
+-- AUTO_INCREMENT pour les tables déchargées
+--
+
+--
+-- AUTO_INCREMENT pour la table `sr_users`
+--
+ALTER TABLE `sr_users`
+  MODIFY `USR_ID` int(11) NOT NULL AUTO_INCREMENT;
+COMMIT;
+
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
