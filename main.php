@@ -68,8 +68,9 @@ foreach ($users as $user) {
     $mangas = selectScansByUserID($user_id);
     searchNewScans($xml, $mangas);
 }
-$mangasToAdd = getMangasFromHTML("https://scantrad.net/mangas");
-foreach ($mangasToAdd as $manga) {
-    $result = addMangatoDB($manga);
-}
+// $mangasToAdd = getMangasFromHTML("https://scantrad.net/mangas");
+// foreach ($mangasToAdd as $manga) {
+//     $result = addMangatoDB($manga);
+//     $isMangaInserted = addMangaToFile($manga);
+// }
 ?>

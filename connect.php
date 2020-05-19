@@ -1,4 +1,14 @@
 <?php
+
+    /**
+     * CONSTANTS
+     */
+    $FLUX_RSS_TABLE = "sr_flux_rss";
+    $LIEN_SCAN_USER_TABLE = "sr_lien_scan_user";
+    $MANGAS_TABLE = "sr_mangas";
+    $SCANS_TABLE = "sr_scans";
+    $USERS_TABLE = "sr_users";
+
     /**
      * Connection to MySQL in Xampp
      */
@@ -17,7 +27,8 @@
      * Selects users from users table
      * Returns an array of users or null if empty
      */
-    function selectAllUsers(){
+    function selectAllUsers()
+    {
         $link = databaseConnexion();
         $sQuery = "SELECT `USR_ID`, `USR_MSG_ID` FROM sr_users";
         $query = mysqli_query($link, $sQuery);
@@ -81,18 +92,34 @@
     }
 
     /**
-     * Inserts manga in manga table
+     * Inserts manga in manga table and scan linked to that manga in scans table
      * $_array contains 'name' and 'href'
-     * returns true if insert is successful
-     * returns false if insert failed
+     * returns true if inserts are successful
+     * returns false if inserts failed
      */
-    function addMangatoDB($_array) {
+    function addMangatoDB($_array) 
+    {
         $link = databaseConnexion();
         $_manga_name = $_array["name"];
-        $iNewItem = "INSERT INTO `sr_mangas` (`MAN_NAME`) VALUES ('{$_manga_name}')
+        $_command_name = "/".CleanString($_array["name"]);
+        $iNewManga = "INSERT INTO `sr_mangas` (`MAN_NAME`, `MAN_COMMAND_NAME`) VALUES ('{$_manga_name}', '{$_command_name}')
                      ON DUPLICATE KEY UPDATE `MAN_ID` = `MAN_ID`";
-        $query = mysqli_query($link, $iNewItem);
-        if ($query) {
+        $iMangaQuery = mysqli_query($link, $iNewManga);
+
+        $iNewScan = "INSERT INTO `sr_scans` 
+                    (SCA_NAME,
+                    SCA_FK_MAN_ID,
+                    SCA_LAST_SCAN,
+                    SCA_RELEASE_DATE) 
+                    VALUES ('{$_manga_name}', 
+                    (SELECT MAN_ID FROM `sr_mangas` WHERE MAN_NAME = '{$_manga_name}'),
+                    0,
+                    '1999-01-01 00:00:00'
+                    )
+        ON DUPLICATE KEY UPDATE `SCA_ID` = `SCA_ID`";
+        $iScanQuery = mysqli_query($link, $iNewScan);
+        mysqli_close($link);
+        if ($iMangaQuery && $iScanQuery) {
             return true;            
         }
         return false;
@@ -105,7 +132,8 @@
      * returns true if insert is successful
      * returns false if insert failed
      */
-    function insertLinkUserScan($_scan_id, $_user_id) {
+    function insertLinkUserScan($_scan_id, $_user_id) 
+    {
         $link = databaseConnexion();
         $iNewItem = "INSERT INTO `sr_lien_scan_user` (`LSU_SCAN_ID`, `LSU_USER_ID`) VALUES ({$_scan_id}, {$_user_id})
                      ON DUPLICATE KEY UPDATE `LSU_ID` = `LSU_ID`";
@@ -114,5 +142,61 @@
             return true;
         }
         return false;
+    }
+
+    
+    /**
+     * Check if string exists in database
+     * return true if exists
+     * false if not
+     */
+    function Exists($_manga_command_name)
+    {
+        $link = databaseConnexion();
+        $sQuery = "SELECT `MAN_ID` FROM `sr_mangas` WHERE `MAN_COMMAND_NAME` = ". mysqli_real_escape_string($_manga_command_name);
+        $query = mysqli_query($link, $sQuery);
+        mysqli_close($link);
+        if ($query)
+        {
+            return true;
+        }
+        else 
+        {
+            return false;
+        }
+    }
+
+    /**
+     * Insert a link between a user and scan
+     * return true if insert is successful
+     * false if not
+     */
+    function InsertMangaToUser($_manga_command_name, $chat_id)
+    {
+        try {
+            $link = databaseConnexion();
+            $sQuery = "SELECT `SCA_ID` as ScanId
+                       FROM `sr_scans` s WHERE `SCA_ID` = `SCA_ID`
+                       INNER JOIN `sr_mangas` m ON `MAN_COMMAND_NAME` = ". mysqli_real_escape_string($_manga_command_name) . " AND m.MAN_ID = s.SCA_FK_MAN_ID";
+            $selectQuery = mysqli_query($link, $sQuery);
+            $scan_id = $selectQuery["ScanId"];
+            $iQuery = "INSERT INTO `sr_lien_scan_user` (`LSU_SCAN_ID`, `LSU_USER_ID`) VALUES ({$scan_id}, {$chat_id}) ON DUPLICATE KEY UPDATE `LSU_ID` = `LSU_ID`";
+            $insertQuery = mysqli_query($link, $iQuery);
+            mysqli_close($link);
+    
+            if ($selectQuery && $insertQuery)
+            {
+                return true;
+            }
+            else 
+            {
+                return false;
+            }
+        }
+        catch (Exception $e)
+        {
+            echo $e;
+        }
+        
     }
 ?>

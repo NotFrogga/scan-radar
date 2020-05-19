@@ -1,0 +1,9 @@
+$ git status
+    [...]
+    # Untracked files:
+    [...]
+variables.php
+**/vendor/ 
+response.txt
+mangas.txt
+

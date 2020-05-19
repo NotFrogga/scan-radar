@@ -1,5 +1,6 @@
 <?php
-/**
+
+    /**
      * Returns RSS copyright data which reprensents website adress
      */
     function getRssName($xml_object)
@@ -86,5 +87,80 @@
         else {
             return null;
         }   
+    }
+
+    /**
+     *  Writes Manga as a Telegram command in a file.
+     *  returns false if nothing is added
+     *  returs true if a line is added
+     */
+    function addMangaToFile($manga)
+    {
+        $NEW_LINE = "\n";
+        $file = 'mangas.txt';
+
+        $manga_name = "/".CleanString($manga["name"]);
+
+        $searchfor = $manga_name;
+
+        // the following line prevents the browser from parsing this as HTML.
+        header('Content-Type: text/plain');
+
+        // get the file contents, assuming the file to be readable (and exist)
+        $contents = file_get_contents($file);
+        // escape special characters in the query
+        $pattern = preg_quote($searchfor, '/');
+        // finalise the regular expression, matching the whole line
+        $pattern = "/^.*$pattern.*\$/m";
+        // search, and store all matching occurences in $matches
+        if(preg_match_all($pattern, $contents, $matches)){
+            return false;
+        }
+        else{
+            file_put_contents($file, $manga_name.$NEW_LINE, FILE_APPEND | LOCK_EX);
+            return true;
+        }
+    }
+
+    /**
+     *  Converts a file into an array.
+     *  $fileName : string
+     *  returns array if success
+     *  returs null if failed
+     */
+    function ConvertFileToArray($fileName) 
+    {
+        $array = array();
+        $handle = fopen($fileName, "r");
+        if ($handle) {
+            while (($line = fgets($handle)) !== false) 
+            {
+                $line = CleanString($line);
+                array_push($array, $line);
+            }
+        
+            fclose($handle);
+            return $array;
+        } 
+        else 
+        {
+            return null;
+        } 
+    }
+
+    /**
+     * Cleans string
+     * Returns string
+     */
+    function CleanString($string)
+    {
+        $string = str_replace("\n", '', $string);
+        $string = str_replace("\r", '', $string);
+        $string = str_replace('.', '', $string);
+        $string = str_replace(':', '', $string);
+        $string = str_replace('-', '', $string);
+        $string = str_replace(' ', '', $string);
+
+        return $string;
     }
 ?>

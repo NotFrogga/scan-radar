@@ -1,150 +1,40 @@
 <?php
+
 include 'variables.php';
-include 'stringmessages.php';
+include 'botcommands.php';
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+require 'vendor/autoload.php';
 
-function apiRequestWebhook($method, $parameters) {
-  if (!is_string($method)) {
-    error_log("Method name must be a string\n");
-    return false;
-  }
+ use \React\EventLoop\Factory;
+ use \unreal4u\TelegramAPI\HttpClientRequestHandler;
+ use \unreal4u\TelegramAPI\Telegram\Methods\GetUpdates;
+ use \unreal4u\TelegramAPI\Abstracts\TraversableCustomType;
+ use \unreal4u\TelegramAPI\TgLog;
+// use \unreal4u\TelegramAPI\Telegram\Methods\SetWebhook;
 
-  if (!$parameters) {
-    $parameters = array();
-  } else if (!is_array($parameters)) {
-    error_log("Parameters must be an array\n");
-    return false;
-  }
+ $loop = Factory::create();
 
-  $parameters["method"] = $method;
+// $setWebhook = new SetWebhook();
+// $setWebhook->url = 'https://www.lehich.com/projects/scannotificator/webhook.php';
+// $tgLog = new TgLog('929088764:AAGnpF9M69aIabA6OoUlHn93SSbdRnpSNg4', new HttpClientRequestHandler($loop));
+// $tgLog->performApiRequest($setWebhook);
+// $loop->run();
 
-  header("Content-Type: application/json");
-  echo json_encode($parameters);
-  return true;
-}
+use \unreal4u\TelegramAPI\Telegram\Types\Update;
+use \unreal4u\TelegramAPI\Telegram\Methods\SendMessage;
 
-function exec_curl_request($handle) {
-  $response = curl_exec($handle);
+// Getting POST request body and decoding it from JSON to associative array
+$content = file_get_contents('php://input');
+$data = json_decode($content, true);
+$update = new Update($data);
 
-  if ($response === false) {
-    $errno = curl_errno($handle);
-    $error = curl_error($handle);
-    error_log("Curl returned error $errno: $error\n");
-    curl_close($handle);
-    return false;
-  }
+$file = 'response.txt';
+$message = "date : ".$update->message->date.", text: ".$update->message->text."\n";
+file_put_contents($file, $message, FILE_APPEND | LOCK_EX);
 
-  $http_code = intval(curl_getinfo($handle, CURLINFO_HTTP_CODE));
-  curl_close($handle);
+//Process user command
+ProcessCommand($update->message->text, $update);
 
-  if ($http_code >= 500) {
-    // do not wat to DDOS server if something goes wrong
-    sleep(10);
-    return false;
-  } else if ($http_code != 200) {
-    $response = json_decode($response, true);
-    error_log("Request has failed with error {$response['error_code']}: {$response['description']}\n");
-    if ($http_code == 401) {
-      throw new Exception('Invalid access token provided');
-    }
-    return false;
-  } else {
-    $response = json_decode($response, true);
-    if (isset($response['description'])) {
-      error_log("Request was successful: {$response['description']}\n");
-    }
-    $response = $response['result'];
-  }
-
-  return $response;
-}
-
-function apiRequest($method, $parameters) {
-  if (!is_string($method)) {
-    error_log("Method name must be a string\n");
-    return false;
-  }
-
-  if (!$parameters) {
-    $parameters = array();
-  } else if (!is_array($parameters)) {
-    error_log("Parameters must be an array\n");
-    return false;
-  }
-
-  foreach ($parameters as $key => &$val) {
-    // encoding to JSON array parameters, for example reply_markup
-    if (!is_numeric($val) && !is_string($val)) {
-      $val = json_encode($val);
-    }
-  }
-  $url = $API_URL.$method.'?'.http_build_query($parameters);
-
-  $handle = curl_init($url);
-  curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
-  curl_setopt($handle, CURLOPT_CONNECTTIMEOUT, 5);
-  curl_setopt($handle, CURLOPT_TIMEOUT, 60);
-
-  return exec_curl_request($handle);
-}
-
-function apiRequestJson($method, $parameters) {
-  if (!is_string($method)) {
-    error_log("Method name must be a string\n");
-    return false;
-  }
-
-  if (!$parameters) {
-    $parameters = array();
-  } else if (!is_array($parameters)) {
-    error_log("Parameters must be an array\n");
-    return false;
-  }
-
-  $parameters["method"] = $method;
-
-  $handle = curl_init($API_URL);
-  curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
-  curl_setopt($handle, CURLOPT_CONNECTTIMEOUT, 5);
-  curl_setopt($handle, CURLOPT_TIMEOUT, 60);
-  curl_setopt($handle, CURLOPT_POST, true);
-  curl_setopt($handle, CURLOPT_POSTFIELDS, json_encode($parameters));
-  curl_setopt($handle, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
-
-  return exec_curl_request($handle);
-}
-
-function processMessage($message) {
-  // process incoming message
-  $message_id = $message['message_id'];
-  $chat_id = $message['chat']['id'];
-  if (isset($message['text'])) {
-    // incoming text message
-    $text = $message['text'];
-    if ($text === "/help" || $text === "/start") {
-      apiRequestWebhook("sendMessage", array('chat_id' => $chat_id, "text" => "{$HELP_TEXT}"));
-    }
-    else if (strpos($text, "/stop") === 0) {
-      // stop now
-    }
-  } else {
-    apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => 'I understand only text messages'));
-  }
-}
-
-if (php_sapi_name() == 'cli') {
-  // if run from console, set or delete webhook
-  apiRequest('setWebhook', array('url' => isset($argv[1]) && $argv[1] == 'delete' ? '' : $WEBHOOK_URL));
-  exit;
-}
-
-$content = file_get_contents("php://input");
-$update = json_decode($content, true);
-
-if (!$update) {
-  // receive wrong update, must not happen
-  exit;
-}
-
-if (isset($update["message"])) {
-  processMessage($update["message"]);
-}
+?>
