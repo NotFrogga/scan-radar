@@ -153,7 +153,8 @@
     function Exists($_manga_command_name)
     {
         $link = databaseConnexion();
-        $sQuery = "SELECT `MAN_ID` FROM `sr_mangas` WHERE `MAN_COMMAND_NAME` = ". mysqli_real_escape_string($_manga_command_name);
+        $string = mysqli_real_escape_string($link, $_manga_command_name);
+        $sQuery = "SELECT `MAN_ID` FROM `sr_mangas` WHERE `MAN_COMMAND_NAME` = '{$string}'";
         $query = mysqli_query($link, $sQuery);
         mysqli_close($link);
         if ($query)
@@ -175,10 +176,13 @@
     {
         try {
             $link = databaseConnexion();
+            $_command = mysqli_real_escape_string($link, $_manga_command_name);
             $sQuery = "SELECT `SCA_ID` as ScanId
-                       FROM `sr_scans` s WHERE `SCA_ID` = `SCA_ID`
-                       INNER JOIN `sr_mangas` m ON `MAN_COMMAND_NAME` = ". mysqli_real_escape_string($_manga_command_name) . " AND m.MAN_ID = s.SCA_FK_MAN_ID";
+                       FROM `sr_scans` s
+                       INNER JOIN `sr_mangas` m ON `MAN_COMMAND_NAME` = '{$_command}' AND m.MAN_ID = s.SCA_FK_MAN_ID
+                       WHERE `SCA_ID` = `SCA_ID`";
             $selectQuery = mysqli_query($link, $sQuery);
+            $queryArray = mysqli_fetch_all($selectQuery);
             $scan_id = $selectQuery["ScanId"];
             $iQuery = "INSERT INTO `sr_lien_scan_user` (`LSU_SCAN_ID`, `LSU_USER_ID`) VALUES ({$scan_id}, {$chat_id}) ON DUPLICATE KEY UPDATE `LSU_ID` = `LSU_ID`";
             $insertQuery = mysqli_query($link, $iQuery);

@@ -7,6 +7,7 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 require 'vendor/autoload.php';
 
+ use Processor\MessageProcessor;
  use \React\EventLoop\Factory;
  use \unreal4u\TelegramAPI\HttpClientRequestHandler;
  use \unreal4u\TelegramAPI\Telegram\Methods\GetUpdates;
@@ -23,7 +24,7 @@ require 'vendor/autoload.php';
 // $loop->run();
 
 use \unreal4u\TelegramAPI\Telegram\Types\Update;
-use \unreal4u\TelegramAPI\Telegram\Methods\SendMessage;
+
 
 // Getting POST request body and decoding it from JSON to associative array
 $content = file_get_contents('php://input');
@@ -31,10 +32,11 @@ $data = json_decode($content, true);
 $update = new Update($data);
 
 $file = 'response.txt';
-$message = "date : ".$update->message->date.", text: ".$update->message->text."\n";
+$message = "date : ".$update->message->date.", text: ".$update->message->text. "chat id : ".$update->message->chat->id."\n";
 file_put_contents($file, $message, FILE_APPEND | LOCK_EX);
 
 //Process user command
-ProcessCommand($update->message->text, $update);
+$processMessage = new MessageProcessor();
+$processMessage->ProcessCommand($update->message->text, $update, $loop);
 
 ?>
